@@ -4,45 +4,35 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Дурак Онлайн</title>
-  
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-  
   <style>
-    body { margin: 0; font-family: sans-serif; background: #18181b; color: white; }
+    body { margin: 0; font-family: sans-serif; background: #18181b; color: white; user-select: none; }
     #login-screen { text-align: center; padding: 50px 20px; }
-    #game-screen { background: #065f46; min-height: 100vh; padding: 20px; text-align: center; display: flex; flex-direction: column; justify-content: space-between;}
+    #game-screen { background: #065f46; min-height: 100vh; padding: 15px; text-align: center; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box;}
     
     input { padding: 10px; margin: 20px auto; display: block; border-radius: 5px; width: 200px; color: black; }
     button { padding: 10px 20px; background: #2563eb; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; font-weight: bold;}
-    
-    .card { background: white; color: black; padding: 20px 15px; margin: 5px; cursor: pointer; border-radius: 8px; font-weight: bold; font-size: 18px; display: inline-block; box-shadow: 0 4px 6px rgba(0,0,0,0.3); transition: transform 0.2s;}
-    .card:hover { transform: translateY(-10px); }
-    
-    .card-back { background: #1e293b; color: #94a3b8; border: 2px solid #334155; cursor: default; }
-    .card-back:hover { transform: none; }
+    .btn-action { background: #ea580c; margin: 10px; padding: 12px 25px; font-size: 18px; }
 
-    @keyframes dropIn {
-      0% { opacity: 0; transform: translateY(-40px) scale(1.2) rotate(-5deg); }
-      100% { opacity: 1; transform: translateY(0) scale(1) rotate(0deg); }
-    }
-    .table-card { animation: dropIn 0.3s ease-out; cursor: default; }
-    .table-card:hover { transform: none; }
+    /* Стили карт */
+    .card { background: white; color: black; padding: 18px 12px; margin: 5px; cursor: pointer; border-radius: 8px; font-weight: bold; font-size: 18px; display: inline-block; box-shadow: 0 4px 6px rgba(0,0,0,0.3); position: relative; min-width: 45px; text-align: center;}
+    .card-back { background: #1e293b; color: #94a3b8; border: 2px solid #334155; cursor: default; }
+    .selected { border: 3px solid #f59e0b; transform: translateY(-10px); }
     
-    #opponent-area { margin-bottom: 10px; }
-    #table-area { background: rgba(0, 0, 0, 0.2); min-height: 140px; border-radius: 10px; margin: 20px auto; padding: 20px; display: flex; justify-content: center; align-items: center; gap: 10px; flex-wrap: wrap; max-width: 600px;}
-    #player-area { margin-top: 10px; }
-    
-    #turn-display { font-size: 20px; margin-bottom: 10px; font-weight: bold; padding: 10px; border-radius: 5px; background: rgba(0,0,0,0.4); display: inline-block;}
+    /* Масти цветом */
+    .suit-heart, .suit-diamond { color: #dc2626; }
+    .suit-spade, .suit-club { color: #000000; }
+
+    /* Пары карт на столе */
+    .card-pair { display: inline-block; position: relative; width: 80px; height: 110px; margin: 10px 15px; vertical-align: top;}
+    .attack-card { position: absolute; left: 0; top: 0; z-index: 1; }
+    .defense-card { position: absolute; left: 15px; top: 15px; z-index: 2; box-shadow: -3px 3px 5px rgba(0,0,0,0.5); }
+
+    #table-area { background: rgba(0, 0, 0, 0.15); min-height: 150px; border-radius: 10px; margin: 15px auto; padding: 15px; max-width: 700px; display: flex; justify-content: center; flex-wrap: wrap; align-items: center;}
+    #info-bar { background: rgba(0,0,0,0.4); padding: 8px; border-radius: 5px; font-size: 18px; font-weight: bold; margin-bottom: 5px;}
   </style>
 </head>
 <body>
-
-  <script>
-    window.onerror = function(message, source, lineno, colno, error) {
-      alert("⚠️ Найдена ошибка в коде!\nТекст: " + message + "\nСтрока: " + lineno);
-      return false;
-    };
-  </script>
 
   <div id="login-screen">
     <h1>Дурак Онлайн</h1>
@@ -51,64 +41,70 @@
   </div>
 
   <div id="game-screen" style="display: none;">
+    
     <div id="opponent-area">
-      <div id="turn-display">Подключение к серверу...</div>
-      <h4>Противник (Карт: <span id="opponent-count">0</span>)</h4>
+      <div id="info-bar">Подключение к игре...</div>
+      <div>Противник: Карт <span id="opponent-count">0</span></div>
       <div id="opponent-cards-container"></div>
     </div>
 
     <div>
-      <h4>Стол:</h4>
+      <div id="trump-display" style="font-size: 20px; font-weight: bold; margin-bottom: 5px;">Козырь: </div>
       <div id="table-area"></div>
+      
+      <div id="actions-area">
+        <button id="btn-bito" class="btn-action" style="display:none;" onclick="sendAction('bito')">БИТО</button>
+        <button id="btn-take" class="btn-action" style="display:none;" onclick="sendAction('take')">ВЗЯТЬ КАРТЫ</button>
+      </div>
     </div>
 
     <div id="player-area">
       <h4>Твои карты:</h4>
       <div id="cards-container"></div>
     </div>
+
   </div>
 
   <script>
-    // ВНИМАНИЕ: Проверь, чтобы эта ссылка СТРОГО совпадала с твоей ссылкой от Render!
+    // ВСТАВЬ СВОЮ ССЫЛКУ НА СЕРВЕР RENDER
     const socket = io('https://durak-server-6wnc.onrender.com');
     
     let myId = '';
     let currentRoom = '';
+    let selectedCard = null; // Для защиты: карту сначала нужно выбрать в руке
 
-    socket.on('connect', () => { 
-      myId = socket.id; 
-      const turnDisplay = document.getElementById('turn-display');
-      if(turnDisplay) turnDisplay.innerText = 'Успешно подключено. Ожидание комнаты...';
-    });
-
-    socket.on('gameState', (state) => { 
-      renderGame(state); 
-    });
+    socket.on('connect', () => { myId = socket.id; });
+    socket.on('gameState', (state) => { renderGame(state); });
 
     function joinRoom() {
       const roomInput = document.getElementById('room-input').value;
-      if (!roomInput) {
-        alert("Введите код комнаты!");
-        return;
+      if (roomInput) {
+        currentRoom = roomInput;
+        socket.emit('joinRoom', currentRoom);
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('game-screen').style.display = 'flex';
       }
-      
-      currentRoom = roomInput;
-      socket.emit('joinRoom', currentRoom);
-      
-      // Переключаем экраны
-      document.getElementById('login-screen').style.display = 'none';
-      document.getElementById('game-screen').style.display = 'flex';
+    }
+
+    function sendAction(type) {
+      socket.emit('action', { roomId: currentRoom, type: type });
+    }
+
+    function getSuitClass(suit) {
+      if (suit === '♥') return 'suit-heart';
+      if (suit === '♦') return 'suit-diamond';
+      if (suit === '♠') return 'suit-spade';
+      return 'suit-club';
     }
 
     function renderGame(state) {
       const myContainer = document.getElementById('cards-container');
       const tableArea = document.getElementById('table-area');
       const opponentContainer = document.getElementById('opponent-cards-container');
-      const turnDisplay = document.getElementById('turn-display');
+      const infoBar = document.getElementById('info-bar');
       const opponentCount = document.getElementById('opponent-count');
+      const trumpDisplay = document.getElementById('trump-display');
       
-      if (!myContainer || !tableArea || !opponentContainer || !turnDisplay) return;
-
       myContainer.innerHTML = '';
       tableArea.innerHTML = '';
       opponentContainer.innerHTML = '';
@@ -118,48 +114,90 @@
       
       if (!me) return;
 
-      // 1. Чей ход
+      // Отображение козыря
+      trumpDisplay.innerHTML = `Козырь: <span class="${getSuitClass(state.trump)}">${state.trump}</span> (В колоде: ${state.deck.length} шт.)`;
+
+      // Настройка кнопок управления
+      document.getElementById('btn-bito').style.display = (state.turn === myId && state.table.length > 0) ? 'inline-block' : 'none';
+      document.getElementById('btn-take').style.display = (state.defender === myId && state.table.length > 0) ? 'inline-block' : 'none';
+
+      // Статус раунда
       if (state.players.length < 2) {
-         turnDisplay.innerText = 'Ожидание второго игрока...';
-         turnDisplay.style.color = 'white';
+         infoBar.innerText = 'Ожидание соперника...';
+         infoBar.style.color = 'white';
       } else if (state.turn === myId) {
-         turnDisplay.innerText = '🟢 ВАШ ХОД!';
-         turnDisplay.style.color = '#4ade80'; 
+         infoBar.innerText = '⚔️ Вы АТАКУЕТЕ. Ходите или нажмите Бито';
+         infoBar.style.color = '#4ade80';
       } else {
-         turnDisplay.innerText = '🔴 Ход противника...';
-         turnDisplay.style.color = '#f87171'; 
+         infoBar.innerText = '🛡️ Вы ЗАЩИЩАЕТЕСЬ. Побейте карты или нажмите Взять';
+         infoBar.style.color = '#f87171';
       }
 
-      // 2. Карты противника
+      // Карты соперника
       if (opponent) {
         opponentCount.innerText = opponent.hand.length;
         for (let i = 0; i < opponent.hand.length; i++) {
-          const cardBack = document.createElement('div');
-          cardBack.className = 'card card-back';
-          cardBack.innerText = '🂠';
-          opponentContainer.appendChild(cardBack);
+          const cb = document.createElement('div');
+          cb.className = 'card card-back';
+          cb.innerText = '🂠';
+          opponentContainer.appendChild(cb);
         }
       }
 
-      // 3. Карты на столе
-      if (state.table) {
-        state.table.forEach(card => {
-          const cardDiv = document.createElement('div');
-          cardDiv.className = 'card table-card';
-          cardDiv.innerText = card.rank + ' ' + card.suit;
-          tableArea.appendChild(cardDiv);
-        });
-      }
+      // Отрисовка СТОЛА (парами: Атака + Защита)
+      state.table.forEach(pair => {
+        const pairDiv = document.createElement('div');
+        pairDiv.className = 'card-pair';
 
-      // 4. Твои карты
+        // Атакующая карта
+        const attDiv = document.createElement('div');
+        attDiv.className = `card attack-card ${getSuitClass(pair.attack.suit)}`;
+        attDiv.innerText = pair.attack.rank + pair.attack.suit;
+        
+        // Если ты защищаешься, клик по карте на столе означает "хочу побить её выбранной картой"
+        if (state.defender === myId && !pair.defense) {
+          attDiv.onclick = () => {
+            if (selectedCard) {
+              socket.emit('defendCard', { roomId: currentRoom, cardId: pair.attack.id, withCard: selectedCard });
+              selectedCard = null; // сбрасываем выделение
+            }
+          };
+        }
+        pairDiv.appendChild(attDiv);
+
+        // Карты защиты (если она есть)
+        if (pair.defense) {
+          const defDiv = document.createElement('div');
+          defDiv.className = `card defense-card ${getSuitClass(pair.defense.suit)}`;
+          defDiv.innerText = pair.defense.rank + pair.defense.suit;
+          pairDiv.appendChild(defDiv);
+        }
+
+        tableArea.appendChild(pairDiv);
+      });
+
+      // Твои карты в руке
       me.hand.forEach(card => {
         const cardDiv = document.createElement('div');
-        cardDiv.className = 'card';
-        cardDiv.innerText = card.rank + ' ' + card.suit;
+        cardDiv.className = `card ${getSuitClass(card.suit)}`;
+        cardDiv.innerText = card.rank + card.suit;
         
+        if (selectedCard && selectedCard.id === card.id) {
+          cardDiv.classList.add('selected');
+        }
+
         cardDiv.onclick = () => {
           if (state.turn === myId) {
-            socket.emit('playCard', { roomId: currentRoom, card: card });
+            // Если ход твой — клик сразу выбрасывает карту в атаку
+            socket.emit('attackCard', { roomId: currentRoom, card: card });
+          } else if (state.defender === myId) {
+            // Если ты защищаешься — первый клик выделяет карту в руке
+            if (selectedCard && selectedCard.id === card.id) {
+              selectedCard = null; // повторный клик снимает выделение
+            } else {
+              selectedCard = card;
+            }
+            renderGame(state); // перерисовываем, чтобы показать рамку вокруг карты
           }
         };
         myContainer.appendChild(cardDiv);
