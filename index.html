@@ -10,38 +10,36 @@
   
   <style>
     body { margin: 0; font-family: sans-serif; background: #18181b; color: white; user-select: none; }
-    
     #login-screen { text-align: center; padding: 20px; max-width: 400px; margin: 0 auto; }
     .lobby-box { background: #27272a; padding: 20px; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.4); }
     h2 { margin-top: 0; font-size: 20px; color: #60a5fa; }
     
     input, select { padding: 12px; margin: 10px 0; display: block; border-radius: 6px; width: 100%; color: black; border: 1px solid #d4d4d8; font-size: 16px; box-sizing: border-box;}
-    button { padding: 12px 20px; background: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; font-weight: bold; width: 100%; transition: background 0.2s; }
+    button { padding: 12px 20px; background: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; font-weight: bold; width: 100%; transition: transform 0.1s; }
+    button:active { transform: scale(0.95); }
     
-    #game-screen { background: #065f46; min-height: 100vh; padding: 15px; text-align: center; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box;}
+    #game-screen { background: #065f46; min-height: 100vh; padding: 10px; text-align: center; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box;}
     
     .card { background: white; color: black; padding: 16px 10px; margin: 4px; cursor: pointer; border-radius: 8px; font-weight: bold; font-size: 18px; display: inline-block; box-shadow: 0 4px 6px rgba(0,0,0,0.3); position: relative; min-width: 42px;}
     .card-back { background: #1e293b; color: #94a3b8; border: 2px solid #334155; cursor: default; font-size: 22px; padding: 12px 10px;}
-    .selected { border: 3px solid #f59e0b; transform: translateY(-12px); }
     
     .suit-heart, .suit-diamond { color: #dc2626; }
     .suit-spade, .suit-club { color: #000000; }
 
-    /* Стили для профилей ТГ */
     .tg-profile { display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: bold; margin-bottom: 5px;}
     .tg-avatar { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; border: 2px solid #34d399;}
     
-    #opponents-container { display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; margin-bottom: 10px; }
-    .opponent-box { background: rgba(0,0,0,0.4); padding: 10px; border-radius: 8px; min-width: 120px; }
-    .opponent-cards { margin-top: 5px; display: flex; justify-content: center; transform: scale(0.7); height: 50px; }
+    #opponents-container { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin-bottom: 5px; }
+    .opponent-box { background: rgba(0,0,0,0.4); padding: 8px; border-radius: 8px; min-width: 110px; font-size: 14px;}
+    .opponent-cards { margin-top: 5px; display: flex; justify-content: center; transform: scale(0.6); height: 40px; }
 
-    .card-pair { display: inline-block; position: relative; width: 75px; height: 105px; margin: 10px 12px; vertical-align: top;}
+    .card-pair { display: inline-block; position: relative; width: 75px; height: 105px; margin: 5px 12px; vertical-align: top;}
     .attack-card { position: absolute; left: 0; top: 0; z-index: 1; }
     .defense-card { position: absolute; left: 16px; top: 16px; z-index: 2; box-shadow: -3px 3px 6px rgba(0,0,0,0.6); }
 
-    #table-area { background: rgba(0, 0, 0, 0.15); min-height: 150px; border-radius: 12px; margin: 10px auto; padding: 15px; display: flex; justify-content: center; flex-wrap: wrap; align-items: center;}
-    #info-bar { background: rgba(0,0,0,0.5); padding: 10px; border-radius: 6px; font-size: 16px; font-weight: bold; margin-bottom: 10px; }
-    .btn-action { background: #ea580c; padding: 12px; font-size: 16px; margin: 5px; width: auto; }
+    #table-area { background: rgba(0, 0, 0, 0.15); min-height: 140px; border-radius: 12px; margin: 5px auto; padding: 10px; display: flex; justify-content: center; flex-wrap: wrap; align-items: center;}
+    #info-bar { background: rgba(0,0,0,0.6); padding: 12px; border-radius: 8px; font-size: 16px; font-weight: bold; margin-bottom: 10px; border: 1px solid rgba(255,255,255,0.1); }
+    .btn-action { background: #ea580c; padding: 14px; font-size: 16px; margin: 5px; width: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.4);}
   </style>
 </head>
 <body>
@@ -66,14 +64,12 @@
   <div id="game-screen" style="display: none;">
     <div>
       <div id="info-bar">Подключение...</div>
-      
       <button id="invite-btn" onclick="inviteFriend()" style="background: #0ea5e9; padding: 8px; margin-bottom: 10px; display: none;">✉️ Позвать друга в комнату</button>
-      
       <div id="opponents-container"></div>
     </div>
 
     <div>
-      <div id="trump-display" style="margin-bottom: 8px; font-weight: bold;"></div>
+      <div id="trump-display" style="margin-bottom: 5px; font-weight: bold; font-size: 14px;"></div>
       <div id="table-area"></div>
       <div>
         <button id="btn-bito" class="btn-action" style="display:none;" onclick="sendRoundAction('bito')">✋ БИТО</button>
@@ -82,62 +78,49 @@
     </div>
 
     <div id="player-area">
-      <div id="my-profile" class="tg-profile" style="justify-content: flex-start; margin-left: 5px;"></div>
+      <div id="my-profile" class="tg-profile" style="justify-content: flex-start; margin-left: 5px; font-size: 14px;"></div>
       <div id="cards-container"></div>
     </div>
   </div>
 
   <script>
+    // ⚠️ ВСТАВЬ ССЫЛКУ НА СЕРВЕР RENDER
     const socket = io('https://durak-server-6wnc.onrender.com');
     
     const tg = window.Telegram.WebApp;
     tg.expand(); 
     
-    const tgUser = tg.initDataUnsafe?.user || { first_name: "Игрок с сайта", photo_url: "https://t4.ftcdn.net/jpg/00/64/67/63/360_F_64676383_LdbmhiNM6Ypzb3FM4PPuFP9rHe7ri8Ju.jpg" };
+    const tgUser = tg.initDataUnsafe?.user || { first_name: "Игрок", photo_url: "https://t4.ftcdn.net/jpg/00/64/67/63/360_F_64676383_LdbmhiNM6Ypzb3FM4PPuFP9rHe7ri8Ju.jpg" };
     
     document.getElementById('tg-user-info').innerHTML = `<img src="${tgUser.photo_url}" class="tg-avatar"> Привет, ${tgUser.first_name}!`;
     document.getElementById('my-profile').innerHTML = `<img src="${tgUser.photo_url}" class="tg-avatar"> ${tgUser.first_name} (Вы)`;
 
     let myId = '';
     let currentRoom = '';
-    let selectedCard = null; 
+    const CARD_VALUES = { '6':6, '7':7, '8':8, '9':9, '10':10, 'J':11, 'Q':12, 'K':13, 'A':14 };
 
     socket.on('connect', () => { myId = socket.id; });
     socket.on('gameState', (state) => { renderGameBoard(state); });
 
     function handleRoomAction(actionType) {
-      let roomId = '';
-      let maxPlayers = 2;
-
-      if (actionType === 'create') {
-        roomId = document.getElementById('create-room-input').value.trim();
-        maxPlayers = document.getElementById('create-max-players').value;
-      } else {
-        roomId = document.getElementById('join-room-input').value.trim();
-      }
+      let roomId = actionType === 'create' ? document.getElementById('create-room-input').value.trim() : document.getElementById('join-room-input').value.trim();
+      let maxPlayers = actionType === 'create' ? document.getElementById('create-max-players').value : 2;
 
       if (!roomId) return alert("Введите код!");
-
       currentRoom = roomId;
-      socket.emit('joinRoom', { 
-        roomId: currentRoom, 
-        maxPlayers: maxPlayers,
-        tgName: tgUser.first_name,
-        tgPhoto: tgUser.photo_url
-      });
+      socket.emit('joinRoom', { roomId: currentRoom, maxPlayers: maxPlayers, tgName: tgUser.first_name, tgPhoto: tgUser.photo_url });
       
       document.getElementById('login-screen').style.display = 'none';
       document.getElementById('game-screen').style.display = 'flex';
     }
 
-    // НОВАЯ ФУНКЦИЯ ПРИГЛАШЕНИЯ БЕЗ ССЫЛОК
     function inviteFriend() {
-      const text = `Привет! Заходи играть со мной в Дурака!\n\n🤖 Бот: @Zetmod_bot\n🔑 Код нашей комнаты: ${currentRoom}`;
-      const shareUrl = `https://t.me/share/url?text=${encodeURIComponent(text)}`;
-      tg.openTelegramLink(shareUrl);
+      const text = `Заходи играть в Дурака!\n\n🤖 Бот: @Zetmod_bot\n🔑 Код комнаты: ${currentRoom}`;
+      tg.openTelegramLink(`https://t.me/share/url?text=${encodeURIComponent(text)}`);
     }
 
     function sendRoundAction(type) { socket.emit('action', { roomId: currentRoom, type: type }); }
+    function restartGame() { socket.emit('restartGame', { roomId: currentRoom }); }
     function getSuitSymbolClass(suit) { return (suit === '♥' || suit === '♦') ? 'suit-heart' : 'suit-spade'; }
 
     function renderGameBoard(state) {
@@ -146,19 +129,29 @@
       const opponentsContainer = document.getElementById('opponents-container');
       const infoBar = document.getElementById('info-bar');
       const trumpDisplay = document.getElementById('trump-display');
-      const inviteBtn = document.getElementById('invite-btn');
       
       myContainer.innerHTML = ''; tableArea.innerHTML = ''; opponentsContainer.innerHTML = '';
-
-      if (state.status === 'waiting') {
-        inviteBtn.style.display = 'inline-block'; 
-      } else {
-        inviteBtn.style.display = 'none'; 
-      }
 
       const me = state.players.find(p => p.id === myId);
       if (!me) return;
 
+      // --- ЭКРАН КОНЦА ИГРЫ И КНОПКА РЕСТАРТА ---
+      if (state.status === 'ended') {
+        let isDurak = state.durak === myId;
+        let textResult = isDurak ? "🛑 ВЫ ПРОИГРАЛИ! ВЫ — ДУРАК! 🫵" : "🎉 ПОБЕДА! ВЫ ИЗБАВИЛИСЬ ОТ КАРТ!";
+        if (state.durak === 'Ничья') textResult = "🤝 ИГРА ОКОНЧЕНА В НИЧЬЮ!";
+        
+        infoBar.innerHTML = `
+          <div style="font-size: 20px; margin-bottom: 10px;">${textResult}</div>
+          <button onclick="restartGame()" style="background: #10b981; padding: 10px 20px; width: auto; font-size: 18px;">🔄 Играть снова</button>
+        `;
+        infoBar.style.color = isDurak ? '#ef4444' : '#fbbf24';
+        document.getElementById('btn-bito').style.display = 'none';
+        document.getElementById('btn-take').style.display = 'none';
+        return; // Останавливаем отрисовку остального
+      }
+
+      document.getElementById('invite-btn').style.display = (state.status === 'waiting') ? 'inline-block' : 'none';
       trumpDisplay.innerHTML = `Колода: ${state.deck.length} | Козырь: <span class="${getSuitSymbolClass(state.trump)}">${state.trump}</span>`;
 
       document.getElementById('btn-bito').style.display = (state.turn === myId && state.table.length > 0) ? 'inline-block' : 'none';
@@ -170,36 +163,20 @@
       } else if (state.turn === myId) {
          infoBar.innerText = '⚔️ ВАШ ХОД!'; infoBar.style.color = '#4ade80';
       } else if (state.defender === myId) {
-         infoBar.innerText = '🛡️ ОТБИВАЙТЕСЬ!'; infoBar.style.color = '#f87171';
+         infoBar.innerText = '🛡️ ВАМ ЗАЩИЩАТЬСЯ!'; infoBar.style.color = '#f87171';
       } else {
-         infoBar.innerText = '👀 Ждем других...'; infoBar.style.color = '#94a3b8';
+         infoBar.innerText = '👀 Ожидайте...'; infoBar.style.color = '#94a3b8';
       }
 
       state.players.forEach(p => {
         if (p.id !== myId) {
           const opBox = document.createElement('div');
           opBox.className = 'opponent-box';
-          
-          let role = '';
-          if (state.turn === p.id) role = '⚔️';
-          if (state.defender === p.id) role = '🛡️';
-          
+          let role = state.turn === p.id ? '⚔️' : (state.defender === p.id ? '🛡️' : '');
           opBox.innerHTML = `
-            <div class="tg-profile">
-              <img src="${p.photo}" class="tg-avatar"> 
-              <span>${p.name} ${role}</span>
-            </div>
+            <div class="tg-profile"><img src="${p.photo}" class="tg-avatar"><span>${p.name.substring(0,8)} ${role}</span></div>
             <div style="font-size: 12px; color: #94a3b8;">Карт: ${p.hand.length}</div>
           `;
-          
-          const cardsPreview = document.createElement('div');
-          cardsPreview.className = 'opponent-cards';
-          for (let i = 0; i < p.hand.length; i++) {
-            const b = document.createElement('div');
-            b.className = 'card card-back'; b.innerText = '🂠';
-            cardsPreview.appendChild(b);
-          }
-          opBox.appendChild(cardsPreview);
           opponentsContainer.appendChild(opBox);
         }
       });
@@ -211,15 +188,6 @@
         const attDiv = document.createElement('div');
         attDiv.className = `card attack-card ${getSuitSymbolClass(pair.attack.suit)}`;
         attDiv.innerText = pair.attack.rank + pair.attack.suit;
-        
-        if (state.defender === myId && !pair.defense) {
-          attDiv.onclick = () => {
-            if (selectedCard) {
-              socket.emit('defendCard', { roomId: currentRoom, cardId: pair.attack.id, withCard: selectedCard });
-              selectedCard = null; 
-            }
-          };
-        }
         pairDiv.appendChild(attDiv);
 
         if (pair.defense) {
@@ -236,14 +204,26 @@
         cardDiv.className = `card ${getSuitSymbolClass(card.suit)}`;
         cardDiv.innerText = card.rank + card.suit;
         
-        if (selectedCard && selectedCard.id === card.id) cardDiv.classList.add('selected');
-
         cardDiv.onclick = () => {
           if (state.turn === myId) {
+            // Атака в 1 клик
             socket.emit('attackCard', { roomId: currentRoom, card: card });
           } else if (state.defender === myId) {
-            selectedCard = (selectedCard && selectedCard.id === card.id) ? null : card;
-            renderGameBoard(state); 
+            // --- УМНАЯ ЗАЩИТА В 1 КЛИК ---
+            // Ищем все непобитые карты на столе
+            const unbeatenPairs = state.table.filter(p => !p.defense);
+            
+            // Пытаемся найти карту, которую можно легально побить выбранной картой
+            let targetPair = unbeatenPairs.find(p => {
+                let isSameSuitHigher = (card.suit === p.attack.suit && CARD_VALUES[card.rank] > CARD_VALUES[p.attack.rank]);
+                let isTrump = (card.suit === state.trump && p.attack.suit !== state.trump);
+                return isSameSuitHigher || isTrump;
+            });
+
+            // Если такая карта нашлась — сервер сам её бьет
+            if (targetPair) {
+               socket.emit('defendCard', { roomId: currentRoom, cardId: targetPair.attack.id, withCard: card });
+            }
           }
         };
         myContainer.appendChild(cardDiv);
