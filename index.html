@@ -135,15 +135,13 @@
       document.getElementById('game-screen').style.display = 'flex';
     }
 
-    // ФУНКЦИЯ ПРИГЛАШЕНИЯ
+   // ФУНКЦИЯ ПРИГЛАШЕНИЯ (БЕЗ HTTP ССЫЛОК)
     function inviteFriend() {
-      // Имя твоего бота (ЗАМЕНИ НА СВОЕГО, например: @MyDurakGameBot)
-      const botUsername = "@Zetmod_bot"; 
-      const text = `Заходи играть со мной в Дурака! Код нашей комнаты: ${currentRoom}`;
-      const shareUrl = `https://t.me/share/url?url=https://t.me/${botUsername}&text=${encodeURIComponent(text)}`;
+      const text = Привет! Заходи играть со мной в Дурака!\n\n🤖 Бот: @Zetmod_bot\n🔑 Код нашей комнаты: ${currentRoom};
+      // Оставляем только параметр text, чтобы не прикреплялась длинная ссылка
+      const shareUrl = https://t.me/share/url?text=${encodeURIComponent(text)};
       tg.openTelegramLink(shareUrl);
     }
-
     function sendRoundAction(type) { socket.emit('action', { roomId: currentRoom, type: type }); }
     function getSuitSymbolClass(suit) { return (suit === '♥' || suit === '♦') ? 'suit-heart' : 'suit-spade'; }
 
