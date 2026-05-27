@@ -10,20 +10,17 @@
   <style>
     body { margin: 0; font-family: sans-serif; background: #18181b; color: white; }
     #login-screen { text-align: center; padding: 50px 20px; }
-    #game-screen { display: none; background: #065f46; min-height: 100vh; padding: 20px; text-align: center; display: flex; flex-direction: column; justify-content: space-between;}
+    #game-screen { background: #065f46; min-height: 100vh; padding: 20px; text-align: center; display: flex; flex-direction: column; justify-content: space-between;}
     
     input { padding: 10px; margin: 20px auto; display: block; border-radius: 5px; width: 200px; color: black; }
     button { padding: 10px 20px; background: #2563eb; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; font-weight: bold;}
     
-    /* Стили для всех карт */
     .card { background: white; color: black; padding: 20px 15px; margin: 5px; cursor: pointer; border-radius: 8px; font-weight: bold; font-size: 18px; display: inline-block; box-shadow: 0 4px 6px rgba(0,0,0,0.3); transition: transform 0.2s;}
     .card:hover { transform: translateY(-10px); }
     
-    /* Рубашка карты (для противника) */
     .card-back { background: #1e293b; color: #94a3b8; border: 2px solid #334155; cursor: default; }
-    .card-back:hover { transform: none; } /* Рубашки не реагируют на мышку */
+    .card-back:hover { transform: none; }
 
-    /* Анимация падения карты на стол */
     @keyframes dropIn {
       0% { opacity: 0; transform: translateY(-40px) scale(1.2) rotate(-5deg); }
       100% { opacity: 1; transform: translateY(0) scale(1) rotate(0deg); }
@@ -31,7 +28,6 @@
     .table-card { animation: dropIn 0.3s ease-out; cursor: default; }
     .table-card:hover { transform: none; }
     
-    /* Зоны игры */
     #opponent-area { margin-bottom: 10px; }
     #table-area { background: rgba(0, 0, 0, 0.2); min-height: 140px; border-radius: 10px; margin: 20px auto; padding: 20px; display: flex; justify-content: center; align-items: center; gap: 10px; flex-wrap: wrap; max-width: 600px;}
     #player-area { margin-top: 10px; }
@@ -41,6 +37,13 @@
 </head>
 <body>
 
+  <script>
+    window.onerror = function(message, source, lineno, colno, error) {
+      alert("⚠️ Найдена ошибка в коде!\nТекст: " + message + "\nСтрока: " + lineno);
+      return false;
+    };
+  </script>
+
   <div id="login-screen">
     <h1>Дурак Онлайн</h1>
     <input type="text" id="room-input" placeholder="Код комнаты" />
@@ -48,14 +51,14 @@
   </div>
 
   <div id="game-screen" style="display: none;">
-    
     <div id="opponent-area">
-      <div id="turn-display">Ожидание второго игрока...</div>
+      <div id="turn-display">Подключение к серверу...</div>
       <h4>Противник (Карт: <span id="opponent-count">0</span>)</h4>
       <div id="opponent-cards-container"></div>
     </div>
 
     <div>
+      <h4>Стол:</h4>
       <div id="table-area"></div>
     </div>
 
@@ -63,29 +66,39 @@
       <h4>Твои карты:</h4>
       <div id="cards-container"></div>
     </div>
-
   </div>
 
   <script>
-    // ВСТАВЬ СЮДА ССЫЛКУ НА СЕРВЕР RENDER!
+    // ВНИМАНИЕ: Проверь, чтобы эта ссылка СТРОГО совпадала с твоей ссылкой от Render!
     const socket = io('https://durak-server-6wnc.onrender.com');
     
     let myId = '';
     let currentRoom = '';
 
-    socket.on('connect', () => { myId = socket.id; });
-    socket.on('gameState', (state) => { renderGame(state); });
+    socket.on('connect', () => { 
+      myId = socket.id; 
+      const turnDisplay = document.getElementById('turn-display');
+      if(turnDisplay) turnDisplay.innerText = 'Успешно подключено. Ожидание комнаты...';
+    });
+
+    socket.on('gameState', (state) => { 
+      renderGame(state); 
+    });
 
     function joinRoom() {
       const roomInput = document.getElementById('room-input').value;
-      if (roomInput) {
-        currentRoom = roomInput;
-        socket.emit('joinRoom', currentRoom);
-        document.getElementById('login-screen').style.display = 'none';
-        document.getElementById('game-screen').style.display = 'flex';
+      if (!roomInput) {
+        alert("Введите код комнаты!");
+        return;
       }
+      
+      currentRoom = roomInput;
+      socket.emit('joinRoom', currentRoom);
+      
+      // Переключаем экраны
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('game-screen').style.display = 'flex';
     }
-
     function renderGame(state) {
       const myContainer = document.getElementById('cards-container');
       const tableArea = document.getElementById('table-area');
@@ -93,15 +106,18 @@
       const turnDisplay = document.getElementById('turn-display');
       const opponentCount = document.getElementById('opponent-count');
       
+      if (!myContainer  !tableArea  !opponentContainer || !turnDisplay) return;
+
       myContainer.innerHTML = '';
       tableArea.innerHTML = '';
       opponentContainer.innerHTML = '';
-[27.05.2026 16:19] AdminCOC: const me = state.players.find(p => p.id === myId);
+
+      const me = state.players.find(p => p.id === myId);
       const opponent = state.players.find(p => p.id !== myId);
       
       if (!me) return;
 
-      // 1. Статус хода
+      // 1. Чей ход
       if (state.players.length < 2) {
          turnDisplay.innerText = 'Ожидание второго игрока...';
          turnDisplay.style.color = 'white';
@@ -113,26 +129,28 @@
          turnDisplay.style.color = '#f87171'; 
       }
 
-      // 2. Рисуем карты ПРОТИВНИКА (только рубашки)
+      // 2. Карты противника
       if (opponent) {
         opponentCount.innerText = opponent.hand.length;
         for (let i = 0; i < opponent.hand.length; i++) {
           const cardBack = document.createElement('div');
           cardBack.className = 'card card-back';
-          cardBack.innerText = '🂠'; // Символ рубашки карты
+          cardBack.innerText = '🂠';
           opponentContainer.appendChild(cardBack);
         }
       }
 
-      // 3. Рисуем СТОЛ (с классом анимации table-card)
-      state.table.forEach(card => {
-        const cardDiv = document.createElement('div');
-        cardDiv.className = 'card table-card';
-        cardDiv.innerText = card.rank + ' ' + card.suit;
-        tableArea.appendChild(cardDiv);
-      });
+      // 3. Карты на столе
+      if (state.table) {
+        state.table.forEach(card => {
+          const cardDiv = document.createElement('div');
+          cardDiv.className = 'card table-card';
+          cardDiv.innerText = card.rank + ' ' + card.suit;
+          tableArea.appendChild(cardDiv);
+        });
+      }
 
-      // 4. Рисуем ТВОИ карты
+      // 4. Твои карты
       me.hand.forEach(card => {
         const cardDiv = document.createElement('div');
         cardDiv.className = 'card';
@@ -149,3 +167,4 @@
   </script>
 </body>
 </html>
+    
