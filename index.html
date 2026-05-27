@@ -88,17 +88,13 @@
   </div>
 
   <script>
-    // ВСТАВЬ ССЫЛКУ НА СЕРВЕР RENDER
     const socket = io('https://durak-server-6wnc.onrender.com');
     
-    // Настройки Telegram
     const tg = window.Telegram.WebApp;
-    tg.expand(); // Открываем на весь экран
+    tg.expand(); 
     
-    // Получаем данные юзера из ТГ (если открыто не в ТГ, будут дефолтные)
     const tgUser = tg.initDataUnsafe?.user || { first_name: "Игрок с сайта", photo_url: "https://t4.ftcdn.net/jpg/00/64/67/63/360_F_64676383_LdbmhiNM6Ypzb3FM4PPuFP9rHe7ri8Ju.jpg" };
     
-    // Показываем профиль в лобби
     document.getElementById('tg-user-info').innerHTML = `<img src="${tgUser.photo_url}" class="tg-avatar"> Привет, ${tgUser.first_name}!`;
     document.getElementById('my-profile').innerHTML = `<img src="${tgUser.photo_url}" class="tg-avatar"> ${tgUser.first_name} (Вы)`;
 
@@ -123,7 +119,6 @@
       if (!roomId) return alert("Введите код!");
 
       currentRoom = roomId;
-      // Отправляем данные ТГ на сервер
       socket.emit('joinRoom', { 
         roomId: currentRoom, 
         maxPlayers: maxPlayers,
@@ -135,13 +130,13 @@
       document.getElementById('game-screen').style.display = 'flex';
     }
 
-   // ФУНКЦИЯ ПРИГЛАШЕНИЯ (БЕЗ HTTP ССЫЛОК)
+    // НОВАЯ ФУНКЦИЯ ПРИГЛАШЕНИЯ БЕЗ ССЫЛОК
     function inviteFriend() {
-      const text = Привет! Заходи играть со мной в Дурака!\n\n🤖 Бот: @Zetmod_bot\n🔑 Код нашей комнаты: ${currentRoom};
-      // Оставляем только параметр text, чтобы не прикреплялась длинная ссылка
-      const shareUrl = https://t.me/share/url?text=${encodeURIComponent(text)};
+      const text = `Привет! Заходи играть со мной в Дурака!\n\n🤖 Бот: @Zetmod_bot\n🔑 Код нашей комнаты: ${currentRoom}`;
+      const shareUrl = `https://t.me/share/url?text=${encodeURIComponent(text)}`;
       tg.openTelegramLink(shareUrl);
     }
+
     function sendRoundAction(type) { socket.emit('action', { roomId: currentRoom, type: type }); }
     function getSuitSymbolClass(suit) { return (suit === '♥' || suit === '♦') ? 'suit-heart' : 'suit-spade'; }
 
@@ -156,9 +151,9 @@
       myContainer.innerHTML = ''; tableArea.innerHTML = ''; opponentsContainer.innerHTML = '';
 
       if (state.status === 'waiting') {
-        inviteBtn.style.display = 'inline-block'; // Показываем кнопку приглашения
+        inviteBtn.style.display = 'inline-block'; 
       } else {
-        inviteBtn.style.display = 'none'; // Скрываем, когда игра началась
+        inviteBtn.style.display = 'none'; 
       }
 
       const me = state.players.find(p => p.id === myId);
@@ -180,7 +175,6 @@
          infoBar.innerText = '👀 Ждем других...'; infoBar.style.color = '#94a3b8';
       }
 
-      // Отрисовка соперников с АВАТАРКАМИ
       state.players.forEach(p => {
         if (p.id !== myId) {
           const opBox = document.createElement('div');
@@ -210,7 +204,6 @@
         }
       });
 
-      // Отрисовка стола
       state.table.forEach(pair => {
         const pairDiv = document.createElement('div');
         pairDiv.className = 'card-pair';
@@ -238,7 +231,6 @@
         tableArea.appendChild(pairDiv);
       });
 
-      // Твои карты
       me.hand.forEach(card => {
         const cardDiv = document.createElement('div');
         cardDiv.className = `card ${getSuitSymbolClass(card.suit)}`;
