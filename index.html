@@ -99,6 +99,7 @@
       document.getElementById('login-screen').style.display = 'none';
       document.getElementById('game-screen').style.display = 'flex';
     }
+
     function renderGame(state) {
       const myContainer = document.getElementById('cards-container');
       const tableArea = document.getElementById('table-area');
@@ -106,7 +107,7 @@
       const turnDisplay = document.getElementById('turn-display');
       const opponentCount = document.getElementById('opponent-count');
       
-      if (!myContainer  !tableArea  !opponentContainer || !turnDisplay) return;
+      if (!myContainer || !tableArea || !opponentContainer || !turnDisplay) return;
 
       myContainer.innerHTML = '';
       tableArea.innerHTML = '';
@@ -167,4 +168,3 @@
   </script>
 </body>
 </html>
-    
