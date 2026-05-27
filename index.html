@@ -1,12 +1,91 @@
 <!DOCTYPE html>
 <html lang="ru">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Дурак Онлайн</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Дурак Онлайн</title>
+  
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  
+  <style>
+    body { margin: 0; font-family: sans-serif; background: #18181b; color: white; }
+    #login-screen { text-align: center; padding: 50px 20px; }
+    #game-screen { display: none; background: #065f46; min-height: 100vh; padding: 20px; text-align: center; }
+    input { padding: 10px; margin: 20px auto; display: block; border-radius: 5px; width: 200px; color: black; }
+    button { padding: 10px 20px; background: #2563eb; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
+    .card { background: white; color: black; padding: 20px 15px; margin: 5px; cursor: pointer; border-radius: 8px; font-weight: bold; font-size: 18px; display: inline-block; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+  </style>
+</head>
+<body>
+
+  <div id="login-screen">
+    <h1>Дурак Онлайн</h1>
+    <input type="text" id="room-input" placeholder="Код комнаты" />
+    <button onclick="joinRoom()">Войти в игру</button>
+  </div>
+
+  <div id="game-screen">
+    <h3 id="room-display">Комната: </h3>
+    <div id="cards-container" style="margin-top: 40px;"></div>
+  </div>
+
+  <script>
+    // ВАЖНО: Твоя ссылка на сервер Render
+    const socket = io('https://durak-server-6wnc.onrender.com');
+    
+    let myId = '';
+    let currentRoom = '';
+
+    // Когда подключились к серверу
+    socket.on('connect', () => {
+      myId = socket.id;
+    });
+
+    // Когда сервер присылает обновление стола
+    socket.on('gameState', (state) => {
+      renderGame(state);
+    });
+
+    // Функция входа в комнату
+    function joinRoom() {
+      const roomInput = document.getElementById('room-input').value;
+      if (roomInput) {
+        currentRoom = roomInput;
+        socket.emit('joinRoom', currentRoom);
+        
+        // Прячем меню, показываем стол
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('game-screen').style.display = 'block';
+        document.getElementById('room-display').innerText = 'Комната: ' + currentRoom;
+      }
+    }
+
+    // Функция отрисовки карт
+    function renderGame(state) {
+      const container = document.getElementById('cards-container');
+      container.innerHTML = ''; // Очищаем стол перед новой отрисовкой
+
+      // Ищем себя в списке игроков
+      const me = state.players.find(p => p.id === myId);
+      if (!me) return;
+
+      // Рисуем карты
+      me.hand.forEach(card => {
+        const cardDiv = document.createElement('div');
+        cardDiv.className = 'card';
+        cardDiv.innerText = card.rank + ' ' + card.suit;
+        
+        // При клике на карту отправляем ход на сервер
+        cardDiv.onclick = () => {
+          if (state.turn === myId) {
+            socket.emit('playCard', { roomId: currentRoom, card: card });
+          }
+        };
+        
+        container.appendChild(cardDiv);
+      });
+    }
+  </script>
+
+</body>
 </html>
